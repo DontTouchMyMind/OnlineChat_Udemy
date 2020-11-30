@@ -7,6 +7,8 @@ from channels.consumer import SyncConsumer, AsyncConsumer
 from channels.exceptions import StopConsumer
 from channels.db import database_sync_to_async
 from .models import Online
+from channels.auth import login, logout
+from django.contrib.auth import get_user_model
 
 
 class ChatConsumer(WebsocketConsumer):
@@ -158,9 +160,13 @@ class MyChatConsumer(WebsocketConsumer):
 class MyAsyncChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_name = self.scope['url_route']['kwargs']['room_name']
+        print(self.scope['user'])
 
         await self.create_online()
-
+        user = await self.get_user_from_db()
+        await login(self.scope, user)
+        await database_sync_to_async(self.scope['session'].save)()
+        print(self.scope['user'])
         await self.channel_layer.group_add(
             self.room_name,
             self.channel_name
@@ -182,9 +188,12 @@ class MyAsyncChatConsumer(AsyncWebsocketConsumer):
             self.room_name,
             {
                 'type': 'chat.message',
-                'text': self.scope['session']['my_var']
+                'text': self.scope['user'].email
             }
         )
+        await logout(self.scope)
+        await database_sync_to_async(self.scope['session'].save)()
+        print(self.scope['user'])
 
     async def chat_message(self, event):
         await self.send(text_data=event['text'])
@@ -201,3 +210,7 @@ class MyAsyncChatConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def refresh_online(self):
         self.online.refresh_from_db()
+
+    @database_sync_to_async
+    def get_user_from_db(self):
+        return get_user_model().objects.filter(email='admin@gmail.com').first()
