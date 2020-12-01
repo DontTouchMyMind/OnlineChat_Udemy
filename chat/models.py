@@ -5,6 +5,11 @@ from django.contrib.auth import get_user_model
 class ChatGroup(models.Model):
     name = models.CharField(max_length=255, default='')
 
+    @property
+    def link(self):
+        channel_name = self.channel_name(self.id)
+        return f'/ws/chat/{channel_name}/'
+
     def __str__(self):
         return self.name
 
