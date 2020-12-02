@@ -9,25 +9,27 @@ class ChatConsumer(BaseChatConsumer):
     # Этот консьюмер будет обрабатывать url, когда пользователь будет переходить по ссылке, 
     # в которой будет идентификатор группы.
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.group_id = self.scope['kwargs']['group_id']
+        # super().__init__(*args, **kwargs)
+        super(ChatConsumer, self).__init__(*args, **kwargs)
+        self.group_id = self.scope['url_route']['kwargs']['group_id']
         self.group = None
         self.participants = []
         self.channel = f'group_{self.group_id}'
         
     async def connect(self):
         await super().connect()
-        group = await self.get_group
+        group = await self.get_group()
         if not group:
-            await self._throw_error({'detail': 'Group not found!'})
+            await self._throw_error({'detail': 'Group not found'})
             await self.close()
             return
-        participants = self.get_participants()
+        participants = await self.get_participants()
         if self.scope['user'].id not in participants:
-            await self._throw_error({'detail': 'Access denied!'})
+            await self._throw_error({'detail': 'Access denied'})
             await self.close()
             return
         await self.channel_layer.group_add(self.channel, self.channel_name)
+        # await self.save_channel_name()
 
     async def disconnect(self, code):
         await self.channel_layer.group_discard(self.channel, self.channel_name)
@@ -37,7 +39,8 @@ class ChatConsumer(BaseChatConsumer):
         user_id = event['data'].get('user_id')
         if not user_id:
             return await self._throw_error({'detail': 'Missing user id!'}, event=event['event'])
-        participants = self.add_participant(user_id)
+        await self.add_participant(user_id)
+        participants = await self.get_participants()
         return await self._send_message(participants, event=event['event'])
 
     async def event_send_message(self, event):
@@ -70,11 +73,10 @@ class ChatConsumer(BaseChatConsumer):
 
     @database_sync_to_async
     def add_participant(self, user_id):
-        user = get_user_model().objects.filter(pk=user_id)
+        user = get_user_model().objects.filter(pk=user_id).first()
         if user:
             participant, _ = GroupParticipant.objects.get_or_create(group=self.group, user=user)
-        participants = self.get_participants()
-        return participants
+
 
     @database_sync_to_async
     def save_message(self, message, user):

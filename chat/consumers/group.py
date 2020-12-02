@@ -13,7 +13,7 @@ class GroupChatConsumer(BaseChatConsumer):
 
     async def event_user_list(self, event):
         """Get a list of users."""
-        data = self.user_list(self.scope['user'])
+        data = await self.user_list(self.scope['user'])
         await self._send_message(data, event=event['event'])
 
     async def event_group_create(self, event):
@@ -21,7 +21,7 @@ class GroupChatConsumer(BaseChatConsumer):
         name = event['data'].get('name')
         if not name:
             return await self._throw_error({'detail': 'Missing group name!'}, event=event['event'])
-        data = self.group_create(self.scope['user'])
+        data = await self.group_create(name, self.scope['user'])
         await self._send_message(data, event=event['event'])
 
     @database_sync_to_async

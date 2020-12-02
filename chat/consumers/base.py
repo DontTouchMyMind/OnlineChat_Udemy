@@ -13,12 +13,12 @@ class BaseChatConsumer(AsyncJsonWebsocketConsumer):
 
     async def _send_message(self, data, event=None):
         await self.send_json(content={'status': 'ok',
-                                      'date': data,
+                                      'data': data,
                                       'event': event})
 
     async def _throw_error(self, data, event=None):
         await self.send_json(content={'status': 'error',
-                                      'date': data,
+                                      'data': data,
                                       'event': event})
 
     async def connect(self):
