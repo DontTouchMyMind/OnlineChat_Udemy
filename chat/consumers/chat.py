@@ -9,13 +9,12 @@ class ChatConsumer(BaseChatConsumer):
     # Этот консьюмер будет обрабатывать url, когда пользователь будет переходить по ссылке, 
     # в которой будет идентификатор группы.
     def __init__(self, *args, **kwargs):
-        # super().__init__(*args, **kwargs)
-        super(ChatConsumer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.group_id = self.scope['url_route']['kwargs']['group_id']
         self.group = None
         self.participants = []
         self.channel = f'group_{self.group_id}'
-        
+
     async def connect(self):
         await super().connect()
         group = await self.get_group()
@@ -76,7 +75,6 @@ class ChatConsumer(BaseChatConsumer):
         user = get_user_model().objects.filter(pk=user_id).first()
         if user:
             participant, _ = GroupParticipant.objects.get_or_create(group=self.group, user=user)
-
 
     @database_sync_to_async
     def save_message(self, message, user):
