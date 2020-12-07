@@ -1,9 +1,9 @@
-from django.conf.urls import url
+from django.conf.urls import re_path
 
 from .consumers import ChatConsumer, GroupChatConsumer
 
 
 websocket_urls = [
-    url(r'^ws/groups/$', GroupChatConsumer),
-    url(r'^ws/chat/(?P<group_id>\d+)/$', ChatConsumer)
+    re_path(r'^ws/groups/$', GroupChatConsumer),
+    re_path(r'^ws/chat/(?P<group_id>\d+)/$', ChatConsumer)
 ]
